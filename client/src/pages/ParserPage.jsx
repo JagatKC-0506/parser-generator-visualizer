@@ -208,6 +208,7 @@ export default function ParserPage() {
             {parserData.hasPredictiveTable && (
               <PredictiveTable
                 ll1Table={parserData.ll1Table}
+                productions={parserData.ll1Productions}
                 conflicts={parserData.conflicts}
                 isLL1={parserData.isLL1}
               />

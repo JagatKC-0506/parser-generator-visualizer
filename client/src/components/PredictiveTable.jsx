@@ -1,20 +1,21 @@
 import { motion } from 'framer-motion';
 
-export default function PredictiveTable({ ll1Table, conflicts, isLL1 }) {
+export default function PredictiveTable({ ll1Table, productions, conflicts, isLL1 }) {
   if (!ll1Table) return null;
 
   const { table, startSymbol } = ll1Table;
   const nonTerminals = Object.keys(table || {});
   const terminals = nonTerminals.length > 0 ? Object.keys(table[nonTerminals[0]] || {}) : [];
 
-  const hasConflict = (nt, sym) =>
-    conflicts?.some((c) => c.nonTerminal === nt && c.symbol === sym);
+  const getConflict = (nt, sym) =>
+    conflicts?.find((c) => c.nonTerminal === nt && c.symbol === sym) || null;
 
-  const getCellContent = (nt, sym) => {
-    const prodIdx = table[nt]?.[sym];
-    if (prodIdx === null || prodIdx === undefined) return null;
-    return prodIdx;
+  const getProd = (prodIdx) => {
+    if (prodIdx === null || prodIdx === undefined || !productions) return null;
+    return productions[prodIdx] || null;
   };
+
+  const prodLabel = (p) => p ? `${p.lhs} → ${p.rhs.join(' ')}` : null;
 
   return (
     <motion.div
@@ -53,11 +54,15 @@ export default function PredictiveTable({ ll1Table, conflicts, isLL1 }) {
               Grammar is NOT LL(1) — {conflicts.length} Conflict{conflicts.length > 1 ? 's' : ''} Detected
             </h4>
             <div className="space-y-2">
-              {conflicts.map((c, i) => (
-                <div key={i} className="text-xs text-red-300 font-mono bg-red-500/5 rounded-lg p-2 border border-red-500/10">
-                  M[{c.nonTerminal}, {c.symbol}] — {c.description}
-                </div>
-              ))}
+              {conflicts.map((c, i) => {
+                const existing = getProd(c.existing);
+                const incoming = getProd(c.incoming);
+                return (
+                  <div key={i} className="text-xs text-red-300 font-mono bg-red-500/5 rounded-lg p-2 border border-red-500/10">
+                    M[{c.nonTerminal}, {c.symbol}]: {prodLabel(existing)} / {prodLabel(incoming)}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -94,8 +99,9 @@ export default function PredictiveTable({ ll1Table, conflicts, isLL1 }) {
                     {nt}
                   </td>
                   {terminals.map((t) => {
-                    const prodIdx = getCellContent(nt, t);
-                    const conflict = hasConflict(nt, t);
+                    const prodIdx = table[nt]?.[t];
+                    const prod = getProd(prodIdx);
+                    const conflict = getConflict(nt, t);
                     return (
                       <td
                         key={t}
@@ -107,10 +113,17 @@ export default function PredictiveTable({ ll1Table, conflicts, isLL1 }) {
                             : 'text-gray-600'
                         }`}
                       >
-                        {conflict ? (
-                          <span className="text-red-300 font-bold">✗</span>
-                        ) : prodIdx !== null ? (
-                          prodIdx
+                        {conflict ? (() => {
+                          const exist = getProd(conflict.existing);
+                          const incom = getProd(conflict.incoming);
+                          return (
+                            <div className="flex flex-col items-center gap-0.5">
+                              <span>{prodLabel(exist)}</span>
+                              <span className="text-amber-300">{prodLabel(incom)}</span>
+                            </div>
+                          );
+                        })() : prod ? (
+                          prodLabel(prod)
                         ) : (
                           '—'
                         )}
@@ -122,12 +135,6 @@ export default function PredictiveTable({ ll1Table, conflicts, isLL1 }) {
             </tbody>
           </table>
         </div>
-
-        {isLL1 && (
-          <p className="text-xs text-gray-500">
-            Start symbol: <kbd className="px-1.5 py-0.5 rounded bg-gray-800 text-gray-300 font-mono">{startSymbol}</kbd>
-          </p>
-        )}
       </div>
     </motion.div>
   );

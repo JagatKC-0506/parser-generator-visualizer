@@ -105,11 +105,13 @@ export function generateLALR1Table(clrStates, clrTransitions, numberedProduction
       }
     }
 
+    const isMerged = stateIds.length > 1;
     mergedStates.push({
       id: mergedId,
-      label: `I${mergedId}${stateIds.length > 1 ? ` (merged I${stateIds.join(', I')})` : ''}`,
+      label: `I${stateIds[0]}`,
       items: mergedItems,
-      mergedFrom: stateIds.length > 1 ? stateIds : undefined,
+      mergedFrom: isMerged ? stateIds : undefined,
+      mergeLabel: isMerged ? `Merged from: I${stateIds.join(', I')}` : undefined,
       isLALR: true,
     });
 

@@ -32,8 +32,11 @@ function StateNode({ data }) {
         position={Position.Left}
         style={{ background: '#818cf8', width: 10, height: 10, border: '2px solid #1e1b4b' }}
       />
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <span>{data.label}</span>
+        {data.isMerged && (
+          <span className="text-[10px] text-violet-300 font-bold bg-violet-500/20 px-1 rounded" title={data.mergeLabel}>⊕</span>
+        )}
         {data.isAccepting && (
           <svg className="w-3.5 h-3.5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -61,6 +64,11 @@ function StateNode({ data }) {
       {hovered && data.items && data.items.length > 0 && (
         <div className="absolute z-40 left-1/2 -translate-x-1/2 bottom-full mb-3 w-64 pointer-events-none">
           <div className="bg-gray-900 border border-gray-700/80 rounded-xl p-3 shadow-2xl">
+            {data.mergeLabel && (
+              <div className="text-[10px] text-violet-400 font-semibold mb-1.5 px-1 pb-1.5 border-b border-gray-700/50">
+                {data.mergeLabel}
+              </div>
+            )}
             <div className="space-y-1">
               {data.items.map((item, i) => {
                 const hasDotAtEnd = item.trim().endsWith('•');
@@ -147,18 +155,23 @@ const DFAGraph = forwardRef(({ dfa, states, parserType }, ref) => {
 
   const customNodes = useMemo(
     () =>
-      rawNodes.map((n) => ({
-        id: n.id,
-        type: 'stateNode',
-        position: n.position,
-        data: {
-          label: n.data.label,
-          items: n.data.items,
-          isInitial: n.data.isInitial,
-          isAccepting: n.data.isAccepting,
-        },
-      })),
-    [rawNodes]
+      rawNodes.map((n) => {
+        const stateInfo = states?.find((s) => s.label === n.data.label);
+        return {
+          id: n.id,
+          type: 'stateNode',
+          position: n.position,
+          data: {
+            label: n.data.label,
+            items: n.data.items,
+            isInitial: n.data.isInitial,
+            isAccepting: n.data.isAccepting,
+            isMerged: stateInfo?.mergedFrom !== undefined,
+            mergeLabel: stateInfo?.mergeLabel,
+          },
+        };
+      }),
+    [rawNodes, states]
   );
 
   const customEdges = useMemo(
