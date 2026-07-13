@@ -16,7 +16,8 @@ function tokenizeRHS(rhsStr) {
     if (/[a-z]/.test(str[i])) {
       let j = i;
       while (j < str.length && /[a-zA-Z0-9_]/.test(str[j])) j++;
-      tokens.push(str.slice(i, j));
+      const token = str.slice(i, j);
+      tokens.push(token.toLowerCase() === 'epsilon' ? 'ε' : token);
       i = j;
     } else if (/[A-Z]/.test(str[i])) {
       let j = i;
