@@ -35,7 +35,7 @@ app.use((err, req, res, next) => {
 
 export default app;
 
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`SLR Parser Generator API running on port ${PORT}`);
   });
